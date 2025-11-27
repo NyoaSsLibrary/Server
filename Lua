@@ -1,0 +1,248 @@
+-- ═══════════════════════════════════════════════
+--  NyoaSs
+-- ═══════════════════════════════════════════════
+
+local NyoaSs = {
+    Name = "NyoaSs Gui",
+    Version = "2.0",
+    AccentColor = Color3.fromRGB(170, 100, 255), -- твой фиолетовый
+    Config = {}
+}
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NyoaSsGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local LOGO_ID = "rbxassetid://18747182725"
+
+local function Tween(obj, props, time, style)
+    TweenService:Create(obj, TweenInfo.new(time or 0.3, style or Enum.EasingStyle.Quart), props):Play()
+end
+
+local function Create(class, props)
+    local obj = Instance.new(class)
+    for i, v in pairs(props or {}) do
+        obj[i] = v
+    end
+    obj.Parent = props.Parent or ScreenGui
+    return obj
+end
+
+function NyoaSs:Window(opts)
+    opts = opts or {}
+    local Window = {}
+    local Main = Create("Frame", {
+        Size = opts.Size or UDim2.fromOffset(620, 520),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = Color3.fromRGB(18, 18, 22),
+        BorderSizePixel = 0,
+    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 14), Parent = Main})
+    Create("UIStroke", {Color = NyoaSs.AccentColor, Thickness = 2.5, Parent = Main})
+
+    Main.Size = UDim2.fromOffset(0, 0)
+    Tween(Main, {Size = opts.Size or UDim2.fromOffset(620, 520)}, 0.5, Enum.EasingStyle.Back)
+
+    local TopBar = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 60),
+        BackgroundColor3 = Color3.fromRGB(22, 22, 28),
+        Parent = Main
+    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 14), Parent = TopBar})
+
+    Create("ImageLabel", {
+        Size = UDim2.fromOffset(48, 48),
+        Position = UDim2.fromOffset(14, 6),
+        BackgroundTransparency = 1,
+        Image = LOGO_ID,
+        Parent = TopBar
+    })
+
+    Create("TextLabel", {
+        Text = "NyoaSs Gui v2.0",
+        TextColor3 = Color3.fromRGB(220, 170, 255),
+        Font = Enum.Font.GothamBlack,
+        TextSize = 20,
+        Position = UDim2.fromOffset(70, 14),
+        BackgroundTransparency = 1,
+        Parent = TopBar
+    })
+
+    local Close = Create("TextButton", {
+        Size = UDim2.fromOffset(36, 36),
+        Position = UDim2.new(1, -48, 0, 12),
+        BackgroundColor3 = Color3.fromRGB(255, 70, 90),
+        Text = "×",
+        TextColor3 = Color3.new(1,1,1),
+        Font = Enum.Font.GothamBold,
+        TextSize = 24,
+        Parent = TopBar
+    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 10), Parent = Close})
+    Close.MouseButton1Click:Connect(function() Tween(Main, {Size = UDim2.fromOffset(0,0)}, 0.4, Enum.EasingStyle.Back); wait(0.4); Main:Destroy() end)
+
+    -- Tabs
+    local TabFrame = Create("Frame", {Size = UDim2.new(0, 160, 1, -60), Position = UDim2.fromOffset(0, 60), BackgroundColor3 = Color3.fromRGB(15,15,20), Parent = Main})
+    local ContentFrame = Create("Frame", {Size = UDim2.new(1, -160, 1, -60), Position = UDim2.fromOffset(160, 60), BackgroundTransparency = 1, Parent = Main})
+
+    local Tabs = {}
+    local CurrentContent = nil
+
+    function Window:Tab(tabopts)
+        local Tab = {}
+        local Button = Create("TextButton", {
+            Size = UDim2.new(1, -16, 0, 50),
+            Position = UDim2.fromOffset(8, 8 + #Tabs*58),
+            BackgroundColor3 = Color3.fromRGB(30,30,40),
+            Text = "  " .. (tabopts.Title or "Tab"),
+            TextColor3 = Color3.fromRGB(200,200,200),
+            Font = Enum.Font.GothamSemibold,
+            TextXAlignment = "Left",
+            Parent = TabFrame
+        })
+        Create("UICorner", {CornerRadius = UDim.new(0, 10), Parent = Button})
+
+        local Content = Create("ScrollingFrame", {
+            Size = UDim2.fromScale(1,1),
+            BackgroundTransparency = 1,
+            ScrollBarThickness = 3,
+            Visible = false,
+            Parent = ContentFrame
+        })
+        local Layout = Create("UIListLayout", {Padding = UDim.new(0, 12), Parent = Content})
+        Create("UIPadding", {PaddingLeft = UDim.new(0,16), PaddingRight = UDim.new(0,16), PaddingTop = UDim.new(0,16), Parent = Content})
+
+        Button.MouseButton1Click:Connect(function()
+            if CurrentContent then CurrentContent.Visible = false end
+            Content.Visible = true
+            Tween(Button, {BackgroundColor3 = NyoaSs.AccentColor}, 0.25)
+            CurrentContent = Content
+        end)
+
+        function Tab:Label(t) Create("TextLabel", {Text = t.Title or "", TextColor3 = Color3.fromRGB(230,230,230), Font = Enum.Font.Gotham, TextSize = 16, BackgroundTransparency = 1, Size = UDim2.new(1,0,0,40), TextXAlignment = "Left", Parent = Content}) end
+
+        function Tab:Button(b)
+            local Btn = Create("TextButton", {
+                Text = b.Title or "Button",
+                BackgroundColor3 = NyoaSs.AccentColor,
+                TextColor3 = Color3.new(1,1,1),
+                Size = UDim2.new(1,0,0,44),
+                Font = Enum.Font.GothamBold,
+                Parent = Content
+            })
+            Create("UICorner", {CornerRadius = UDim.new(0,10), Parent = Btn})
+            Btn.MouseEnter:Connect(function() Tween(Btn, {BackgroundColor3 = Color3.fromRGB(190,120,275)}, 0.2) end)
+            Btn.MouseLeave:Connect(function() Tween(Btn, {BackgroundColor3 = NyoaSs.AccentColor}, 0.2) end)
+            Btn.MouseButton1Click:Connect(b.Callback or function() end)
+        end
+
+        function Tab:Toggle(t)
+            local val = t.Default or false
+            local Frame = Create("Frame", {Size = UDim2.new(1,0,0,50), BackgroundTransparency = 1, Parent = Content})
+            Create("TextLabel", {Text = t.Title, TextColor3 = Color3.fromRGB(220,220,220), Size = UDim2.new(1,-60,1,0), Position = UDim2.fromOffset(0,0), BackgroundTransparency = 1, TextXAlignment = "Left", Parent = Frame})
+            local Switch = Create("Frame", {Size = UDim2.fromOffset(52,28), Position = UDim2.new(1,-68,0.5,-14), BackgroundColor3 = val and NyoaSs.AccentColor or Color3.fromRGB(60,60,70), Parent = Frame})
+            Create("UICorner", {CornerRadius = UDim.new(0,14), Parent = Switch})
+            local Circle = Create("Frame", {Size = UDim2.fromOffset(22,22), Position = UDim2.fromOffset(val and 26 or 4, 3), BackgroundColor3 = Color3.new(1,1,1), Parent = Switch})
+            Create("UICorner", {CornerRadius = UDim.new(1,0), Parent = Circle})
+            Switch.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    val = not val
+                    Tween(Switch, {BackgroundColor3 = val and NyoaSs.AccentColor or Color3.fromRGB(60,60,70)}, 0.2)
+                    Tween(Circle, {Position = UDim2.fromOffset(val and 26 or 4, 3)}, 0.2)
+                    if t.Callback then t.Callback(val) end
+                    NyoaSs.Config[t.Title] = val
+                end
+            end)
+        end
+
+        function Tab:Slider(s)
+            local val = s.Default or s.Min or 0
+            local Frame = Create("Frame", {Size = UDim2.new(1,0,0,60), BackgroundTransparency = 1, Parent = Content})
+            Create("TextLabel", {Text = s.Title .. ": " .. val, Name = "ValueLabel", TextColor3 = Color3.new(1,1,1), Size = UDim2.new(1,0,0,20), BackgroundTransparency = 1, Parent = Frame})
+            local Bar = Create("Frame", {Size = UDim2.new(1,0,0,12), Position = UDim2.fromOffset(0,30), BackgroundColor3 = Color3.fromRGB(50,50,60), Parent = Frame})
+            Create("UICorner", {CornerRadius = UDim.new(0,6), Parent = Bar})
+            local Fill = Create("Frame", {Size = UDim2.new((val-s.Min)/(s.Max-s.Min),0,1,0), BackgroundColor3 = NyoaSs.AccentColor, Parent = Bar})
+            Create("UICorner", {CornerRadius = UDim.new(0,6), Parent = Fill})
+            local Knob = Create("Frame", {Size = UDim2.fromOffset(20,20), AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.new((val-s.Min)/(s.Max-s.Min),0,0.5,0), BackgroundColor3 = Color3.new(1,1,1), Parent = Bar})
+            Create("UICorner", {CornerRadius = UDim.new(1,0), Parent = Knob})
+
+            local dragging = false
+            Knob.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
+            Knob.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+            UserInputService.InputChanged:Connect(function(i)
+                if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+                    local percent = math.clamp((i.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                    val = math.floor(s.Min + (s.Max - s.Min) * percent / (s.Step or 1)) * (s.Step or 1)
+                    Tween(Fill, {Size = UDim2.new(percent,0,1,0)}, 0.1)
+                    Tween(Knob, {Position = UDim2.new(percent,0,0.5,0)}, 0.1)
+                    Frame.ValueLabel.Text = s.Title .. ": " .. val
+                    if s.Callback then s.Callback(val) end
+                    NyoaSs.Config[s.Title] = val
+                end
+            end)
+        end
+
+        function Tab:ConfigSection()
+            Tab:Button({Title = "Save Config", Callback = function()
+                local json = HttpService:JSONEncode(NyoaSs.Config)
+                setclipboard(json)
+                NyoaSs:Notify({Title = "NyoaSs", Content = "Конфиг скопирован в буфер!", Duration = 3})
+            end})
+            Tab:Button({Title = "Load config", Callback = function()
+                local input = Create("TextBox", {Size = UDim2.new(0,300,0,100), Position = UDim2.fromScale(0.5,0.5), AnchorPoint = Vector2.new(0.5,0.5), Text = "Вставь JSON сюда", Parent = ScreenGui})
+                input.Focused:Connect(function() input.Text = "" end)
+                input.FocusLost:Connect(function()
+                    local success, cfg = pcall(function() return HttpService:JSONDecode(input.Text) end)
+                    if success then NyoaSs.Config = cfg; NyoaSs:Notify({Title = "Успех", Content = "Конфиг загружен!"}) else NyoaSs:Notify({Title = "Ошибка", Content = "Неверный JSON"}) end
+                    input:Destroy()
+                end)
+            end})
+        end
+
+        table.insert(Tabs, {Button = Button})
+        if #Tabs == 1 then Button.MouseButton1Click:Fire() end
+        return Tab
+    end
+
+    function NyoaSs:Notify(n)
+        spawn(function()
+            local notif = Create("Frame", {Size = UDim2.new(0,340,0,90), Position = UDim2.new(1,20,1,-110), BackgroundColor3 = Color3.fromRGB(20,20,25), Parent = ScreenGui})
+            Create("UICorner", {CornerRadius = UDim.new(0,12), Parent = notif})
+            Create("UIStroke", {Color = NyoaSs.AccentColor, Thickness = 2, Parent = notif})
+            Create("TextLabel", {Text = n.Title or "NyoaSs", TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 18, Position = UDim2.fromOffset(16,12), Parent = notif})
+            Create("TextLabel", {Text = n.Content or "", TextColor3 = Color3.fromRGB(180,180,180), TextSize = 14, Position = UDim2.fromOffset(16,40), Size = UDim2.new(1,-32,0,40), TextWrapped = true, Parent = notif})
+            Tween(notif, {Position = UDim2.new(1,-360,1,-110)}, 0.4, Enum.EasingStyle.Back)
+            wait(n.Duration or 4)
+            Tween(notif, {Position = UDim2.new(1,20,1,-110)}, 0.5)
+            wait(0.5) notif:Destroy()
+        end)
+    end
+
+    -- Drag
+    local dragging = false
+    TopBar.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            local delta = inp.Position - Main.AbsolutePosition
+            local conn; conn = inp.Changed:Connect(function()
+                if inp.UserInputState == Enum.UserInputState.End then dragging = false; conn:Disconnect() end
+            end)
+            UserInputService.InputChanged:Connect(function(i)
+                if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+                    Main.Position = UDim2.fromOffset(i.Position.X - delta.X, i.Position.Y - delta.Y)
+                end
+            end)
+        end
+    end)
+
+    NyoaSs:Notify({Title = "NyoaSs Gui", Content = "Loaded Successfully!", Duration = 4})
+    return Window
+end
+
+return NyoaSs
