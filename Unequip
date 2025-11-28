@@ -1,0 +1,55 @@
+--[[ Unequip When Used SLIVKINEEPY]]--
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+
+local player = Players.LocalPlayer
+local hum = player.Character and player.Character:FindFirstChild("Humanoid")
+
+
+getgenv().UnequipWhenUsed = false
+
+
+local function onToolEquipped(tool)
+    if not tool:IsA("Tool") then return end
+
+
+    local activatedConn
+    activatedConn = tool.Activated:Connect(function()
+        if getgenv().UnequipWhenUsed then
+            task.wait(0.07)
+            if hum then
+                hum:UnequipTools()
+            end
+        end
+    end)
+
+
+    tool.AncestryChanged:Connect(function(_, parent)
+        if not parent and activatedConn then
+            activatedConn:Disconnect()
+        end
+    end)
+end
+
+
+for _, tool in ipairs(player.Backpack:GetChildren()) do
+    onToolEquipped(tool)
+end
+if player.Character then
+    for _, tool in ipairs(player.Character:GetChildren()) do
+        onToolEquipped(tool)
+    end
+end
+
+
+player.Backpack.ChildAdded:Connect(onToolEquipped)
+if player.Character then
+    player.Character.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            onToolEquipped(child)
+        end
+    end)
+end
