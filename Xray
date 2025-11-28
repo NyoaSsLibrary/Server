@@ -1,0 +1,193 @@
+local pl = game.Players.LocalPlayer
+local rs = game:GetService("ReplicatedStorage")
+local run = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
+local ts = game:GetService("TweenService")
+local cam = workspace.CurrentCamera
+
+local enabled = false
+local flySpeed = 60
+local item = "Grapple Hook"
+local useRE = rs:WaitForChild("Packages",10):WaitForChild("Net",10):WaitForChild("RE/UseItem",10)
+local args = {0.10267777442932129}
+
+local char,hum,hrp
+local bv = Instance.new("BodyVelocity")
+bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+local bg = Instance.new("BodyGyro")
+bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+bg.P = 10000
+
+local keys = {W=false,S=false,A=false,D=false,Space=false,Ctrl=false}
+local isMobile = uis.TouchEnabled and not uis.KeyboardEnabled
+local mobileBtns
+
+task.spawn(function()
+	local pg = pl:WaitForChild("PlayerGui",10)
+	local sg = Instance.new("ScreenGui",pg)
+	sg.ResetOnSpawn = false
+	local f = Instance.new("Frame",sg)
+	f.Size = UDim2.new(0,280,0,50)
+	f.Position = UDim2.new(.5,-140,-.15,0)
+	f.BackgroundColor3 = Color3.fromRGB(8,8,8)
+	Instance.new("UICorner",f).CornerRadius = UDim.new(0,10)
+	Instance.new("UIStroke",f).Color = Color3.fromRGB(0,255,255)
+	Instance.new("UIStroke",f).Thickness = 2
+	local t = Instance.new("TextLabel",f)
+	t.Size = UDim2.new(1,0,1,0)
+	t.BackgroundTransparency = 1
+	t.Text = "Glitch fly by slivkineepy"
+	t.TextColor3 = Color3.fromRGB(0,255,255)
+	t.Font = Enum.Font.GothamBold
+	t.TextSize = 18
+	ts:Create(f,TweenInfo.new(.8),{Position=UDim2.new(.5,-140,.02,0)}):Play()
+	task.wait(2.3)
+	ts:Create(f,TweenInfo.new(.6),{Position=UDim2.new(.5,-140,-.15,0)}):Play()
+	task.wait(.7)
+	sg:Destroy()
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "NyoaSsV2_Fly"
+gui.ResetOnSpawn = false
+gui.Parent = pl:WaitForChild("PlayerGui",10)
+
+local main = Instance.new("Frame",gui)
+main.Size = UDim2.new(0,200,0,110)
+main.Position = UDim2.new(.5,-100,.5,-55)
+main.BackgroundColor3 = Color3.fromRGB(12,12,12)
+main.Active = true
+main.Draggable = true
+main.AnchorPoint = Vector2.new(.5,.5)
+Instance.new("UICorner",main).CornerRadius = UDim.new(0,12)
+Instance.new("UIStroke",main).Color = Color3.fromRGB(0,255,255)
+Instance.new("UIStroke",main).Thickness = 2
+
+local title = Instance.new("TextLabel",main)
+title.Text = "NyoaSs V2 — FLY"
+title.Size = UDim2.new(1,0,0,34)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(0,255,255)
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 18
+
+local tog = Instance.new("TextButton",main)
+tog.Size = UDim2.new(.85,0,0,38)
+tog.Position = UDim2.new(.075,0,.48,0)
+tog.BackgroundColor3 = Color3.fromRGB(0,180,180)
+tog.Text = "FLY OFF"
+tog.TextColor3 = Color3.new(1,1,1)
+tog.Font = Enum.Font.GothamBold
+tog.TextSize = 17
+Instance.new("UICorner",tog).CornerRadius = UDim.new(0,9)
+
+if isMobile then
+	mobileBtns = Instance.new("Frame",gui)
+	mobileBtns.Size = UDim2.new(0,180,0,180)
+	mobileBtns.Position = UDim2.new(1,-200,1,-200)
+	mobileBtns.BackgroundTransparency = 1
+	mobileBtns.Visible = false
+
+	local function b(txt,pos,key)
+		local btn = Instance.new("TextButton",mobileBtns)
+		btn.Size = UDim2.new(0,50,0,50)
+		btn.Position = pos
+		btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+		btn.BackgroundTransparency = .5
+		btn.Text = txt
+		btn.TextColor3 = Color3.new(1,1,1)
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 20
+		Instance.new("UICorner",btn).CornerRadius = UDim.new(0,12)
+		btn.MouseButton1Down:Connect(function() keys[key]=true end)
+		btn.MouseButton1Up:Connect(function() keys[key]=false end)
+	end
+
+	b("Up",UDim2.new(0,65,0,0),"W")
+	b("Down",UDim2.new(0,65,0,130),"S")
+	b("Left",UDim2.new(0,15,0,75),"A")
+	b("Right",UDim2.new(0,115,0,75),"D")
+	b("Rise",UDim2.new(0,15,0,10),"Space")
+	b("Fall",UDim2.new(0,115,0,10),"Ctrl")
+end
+
+local function buy() pcall(function() rs.Packages.Net["RF/CoinsShopService/RequestBuy"]:InvokeServer(item) end) end
+local function equip() if char then local t=char:FindFirstChild(item)or pl.Backpack:FindFirstChild(item) if t then t.Parent=char end end end
+local function fake() if char and char:FindFirstChild(item) then pcall(function() useRE:FireServer(unpack(args)) end) end end
+
+local function updateChar()
+	char = pl.Character or pl.CharacterAdded:Wait()
+	hum = char:WaitForChild("Humanoid")
+	hrp = char:WaitForChild("HumanoidRootPart")
+end
+
+local function startFly()
+	bv.Parent = hrp
+	bg.Parent = hrp
+	hum.PlatformStand = true
+	if isMobile and mobileBtns then mobileBtns.Visible = true end
+end
+local function stopFly()
+	bv.Parent = nil
+	bg.Parent = nil
+	if hum then hum.PlatformStand = false end
+	if isMobile and mobileBtns then mobileBtns.Visible = false end
+end
+
+uis.InputBegan:Connect(function(i,gp)
+	if gp then return end
+	if i.KeyCode == Enum.KeyCode.W then keys.W = true
+	elseif i.KeyCode == Enum.KeyCode.S then keys.S = true
+	elseif i.KeyCode == Enum.KeyCode.A then keys.A = true
+	elseif i.KeyCode == Enum.KeyCode.D then keys.D = true
+	elseif i.KeyCode == Enum.KeyCode.Space then keys.Space = true
+	elseif i.KeyCode == Enum.KeyCode.LeftControl then keys.Ctrl = true end
+end)
+
+uis.InputEnded:Connect(function(i)
+	if i.KeyCode == Enum.KeyCode.W then keys.W = false
+	elseif i.KeyCode == Enum.KeyCode.S then keys.S = false
+	elseif i.KeyCode == Enum.KeyCode.A then keys.A = false
+	elseif i.KeyCode == Enum.KeyCode.D then keys.D = false
+	elseif i.KeyCode == Enum.KeyCode.Space then keys.Space = false
+	elseif i.KeyCode == Enum.KeyCode.LeftControl then keys.Ctrl = false end
+end)
+
+run.RenderStepped:Connect(function()
+	if not enabled or not hrp then return end
+	equip() fake()
+
+	local dir = Vector3.new()
+	if keys.W then dir += cam.CFrame.LookVector end
+	if keys.S then dir -= cam.CFrame.LookVector end
+	if keys.A then dir -= cam.CFrame.RightVector end
+	if keys.D then dir += cam.CFrame.RightVector end
+	if keys.Space then dir += Vector3.new(0,1,0) end
+	if keys.Ctrl then dir -= Vector3.new(0,1,0) end
+
+	if dir.Magnitude > 0 then dir = dir.Unit end
+	bv.Velocity = dir * flySpeed
+	bg.CFrame = cam.CFrame
+end)
+
+pl.CharacterAdded:Connect(function()
+	task.wait(.5)
+	updateChar()
+	if enabled then buy() task.wait(.3) equip() startFly() end
+end)
+
+tog.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	updateChar()
+	if enabled then
+		tog.Text = "FLY ON"
+		tog.BackgroundColor3 = Color3.fromRGB(0,255,140)
+		buy() task.wait(.4) equip() startFly()
+	else
+		tog.Text = "FLY OFF"
+		tog.BackgroundColor3 = Color3.fromRGB(0,180,180)
+		stopFly()
+	end
+end)
+
+if pl.Character then updateChar() end
