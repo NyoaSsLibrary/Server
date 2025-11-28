@@ -1,312 +1,249 @@
--- NyoaSs Gui v10 - Full Featured Library
--- Minimize to floating logo button | SearchBar | Keybind | Configs | Notifications
+--[[Melee Aura SLIVKINEEPY]]--
 
-local NyoaSs = {
-    Accent = Color3.fromRGB(170, 85, 255),
-    Logo = "rbxassetid://18747182725",
-    Config = {},
-    Minimized = false,
-    Keybinds = {},
-    SearchText = ""
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local pgui = player:WaitForChild("PlayerGui")
+
+local auraEnabled = false
+local selectedWeapon = "Bat"
+local maxDistance = 3
+
+local weapons = {
+    "Bat","Slap","Iron Slap","Gold Slap","Diamond Slap","Emerald Slap","Ruby Slap",
+    "Dark Matter Slap","Flame Slap","Nuclear Slap","Galaxy Slap","Glitch Slap",
+    "Splatter Slap","Gummy Slap","Blackhole Slap","Ban Hammer"
 }
 
-local TS = game:GetService("TweenService")
-local UIS = game:GetService("UserInputService")
-local Http = game:GetService("HttpService")
-local CoreGui = game:GetService("CoreGui")
+getgenv().MeleeAuraEnabled = false
+getgenv().UnequipWhenUsed = false
 
-local Screen = Instance.new("ScreenGui")
-Screen.Name = "NyoaSsGui"
-Screen.ResetOnSpawn = false
-Screen.Parent = CoreGui
+getgenv().antiKick = true
+local oldnc; oldnc = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    if antiKick and method == "FireServer" and (tostring(self):find("ObserveTag") or tostring(self):find("Kick")) then
+        return
+    end
+    return oldnc(self, ...)
+end))
 
-local function Tween(obj, props, time, style)
-    TS:Create(obj, TweenInfo.new(time or 0.3, style or Enum.EasingStyle.Quart), props):Play()
-end
+local sg = Instance.new("ScreenGui")
+sg.Name = "NyoaHubSab"
+sg.ResetOnSpawn = false
+sg.Parent = pgui
 
--- Notification
-function NyoaSs:Notify(data)
-    spawn(function()
-        local n = Instance.new("Frame")
-        n.Size = UDim2.new(0, 360, 0, 90)
-        n.Position = UDim2.new(1, -380, 1, -110)
-        n.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-        n.Parent = Screen
-        Instance.new("UICorner", {CornerRadius = UDim.new(0, 12), Parent = n})
-        Instance.new("UIStroke", {Color = NyoaSs.Accent, Thickness = 2, Parent = n})
-        Instance.new("TextLabel", {Text = data.Title or "NyoaSs", Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Color3.new(1,1,1), Position = UDim2.fromOffset(16,12), BackgroundTransparency = 1, Parent = n})
-        Instance.new("TextLabel", {Text = data.Content or "", TextSize = 14, TextColor3 = Color3.fromRGB(190,190,190), Position = UDim2.fromOffset(16,40), Size = UDim2.new(1,-32,0,40), TextWrapped = true, BackgroundTransparency = 1, Parent = n})
-        Tween(n, {Position = UDim2.new(1,-380,1,-110)}, 0.4)
-        task.wait(data.Duration or 4)
-        Tween(n, {Position = UDim2.new(1,20,1,-110)}, 0.5)
-        task.wait(0.5)
-        n:Destroy()
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0,140,0,36)
+openBtn.Position = UDim2.new(0,12,0.5,-18)
+openBtn.BackgroundColor3 = Color3.fromRGB(10,10,22)
+openBtn.Text = "open NyoaHub"
+openBtn.TextColor3 = Color3.fromRGB(85,195,255)
+openBtn.Font = Enum.Font.GothamBold
+openBtn.TextSize = 18
+openBtn.BackgroundTransparency = 0.25
+openBtn.Parent = sg
+Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0,14)
+Instance.new("UIStroke", openBtn).Color = Color3.fromRGB(70,70,95)
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0,230,0,260)
+main.Position = UDim2.new(0.5,-115,0.5,-130)
+main.BackgroundColor3 = Color3.fromRGB(15,15,25)
+main.Visible = false
+main.Parent = sg
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,16)
+local ms = Instance.new("UIStroke", main)
+ms.Color = Color3.fromRGB(80,80,100)
+ms.Thickness = 2.5
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,42)
+title.BackgroundColor3 = Color3.fromRGB(10,10,20)
+title.Text = "NyoaSS melee"
+title.TextColor3 = Color3.fromRGB(255,100,100)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.Parent = main
+Instance.new("UICorner", title).CornerRadius = UDim.new(0,16)
+
+local discordLabel = Instance.new("TextLabel")
+discordLabel.Size = UDim2.new(1,0,0,22)
+discordLabel.Position = UDim2.new(0,0,0,40)
+discordLabel.BackgroundTransparency = 1
+discordLabel.Text = "discord.gg/WBYkWfPQC2"
+discordLabel.TextColor3 = Color3.fromRGB(130,170,255)
+discordLabel.Font = Enum.Font.Gotham
+discordLabel.TextSize = 15
+discordLabel.Parent = main
+
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0,36,0,36)
+close.Position = UDim2.new(1,-42,0,3)
+close.BackgroundTransparency = 1
+close.Text = "X"
+close.TextColor3 = Color3.fromRGB(255,90,90)
+close.TextSize = 32
+close.Font = Enum.Font.GothamBold
+close.Parent = title
+
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0.86,0,0,46)
+toggle.Position = UDim2.new(0.07,0,0,72)
+toggle.BackgroundColor3 = Color3.fromRGB(190,40,50)
+toggle.Text = "OFF"
+toggle.TextColor3 = Color3.new(1,1,1)
+toggle.Font = Enum.Font.GothamBold
+toggle.TextSize = 26
+toggle.Parent = main
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(0,12)
+
+local dropLabel = Instance.new("TextLabel")
+dropLabel.Size = UDim2.new(0.86,0,0,22)
+dropLabel.Position = UDim2.new(0.07,0,0,130)
+dropLabel.BackgroundTransparency = 1
+dropLabel.Text = "(dropdown)"
+dropLabel.TextColor3 = Color3.fromRGB(180,180,200)
+dropLabel.Font = Enum.Font.Gotham
+dropLabel.TextSize = 16
+dropLabel.Parent = main
+
+local dropBtn = Instance.new("TextButton")
+dropBtn.Size = UDim2.new(0.86,0,0,40)
+dropBtn.Position = UDim2.new(0.07,0,0,155)
+dropBtn.BackgroundColor3 = Color3.fromRGB(35,35,50)
+dropBtn.Text = "Bat"
+dropBtn.TextColor3 = Color3.new(1,1,1)
+dropBtn.Font = Enum.Font.GothamSemibold
+dropBtn.TextSize = 20
+dropBtn.Parent = main
+Instance.new("UICorner", dropBtn).CornerRadius = UDim.new(0,10)
+
+local dropList = Instance.new("ScrollingFrame")
+dropList.Size = UDim2.new(0.86,0,0,85)
+dropList.Position = UDim2.new(0.07,0,0,200)
+dropList.BackgroundColor3 = Color3.fromRGB(30,30,45)
+dropList.ScrollBarThickness = 4
+dropList.Visible = false
+dropList.CanvasSize = UDim2.new(0,0,0,#weapons*36)
+dropList.Parent = main
+Instance.new("UICorner", dropList).CornerRadius = UDim.new(0,10)
+
+local lay = Instance.new("UIListLayout", dropList)
+lay.Padding = UDim.new(0,4)
+
+for _,w in ipairs(weapons) do
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1,0,0,34)
+    b.BackgroundColor3 = Color3.fromRGB(45,45,65)
+    b.Text = w
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 18
+    b.Parent = dropList
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+    b.MouseButton1Click:Connect(function()
+        selectedWeapon = w
+        dropBtn.Text = w
+        dropList.Visible = false
     end)
 end
 
--- Floating minimize button
-local MiniBtn = Instance.new("ImageButton")
-MiniBtn.Size = UDim2.fromOffset(64,64)
-MiniBtn.Position = UDim2.fromScale(0.02,0.1)
-MiniBtn.Image = NyoaSs.Logo
-MiniBtn.BackgroundTransparency = 1
-MiniBtn.Visible = false
-MiniBtn.ZIndex = 999
-MiniBtn.Parent = Screen
-Instance.new("UICorner", {CornerRadius = UDim.new(1,0), Parent = MiniBtn})
-Instance.new("UIStroke", {Color = NyoaSs.Accent, Thickness = 3, Parent = MiniBtn})
-
--- Main window
-local Main = Instance.new("Frame")
-Main.Size = UDim2.fromOffset(680, 540)
-Main.Position = UDim2.fromScale(0.5,0.5)
-Main.AnchorPoint = Vector2.new(0.5,0.5)
-Main.BackgroundColor3 = Color3.fromRGB(18,18,24)
-Main.Parent = Screen
-Instance.new("UICorner", {CornerRadius = UDim.new(0,14), Parent = Main})
-Instance.new("UIStroke", {Color = NyoaSs.Accent, Thickness = 2.5, Parent = Main})
-
-local Topbar = Instance.new("Frame")
-Topbar.Size = UDim2.new(1,0,0,56)
-Topbar.BackgroundColor3 = Color3.fromRGB(24,24,32)
-Topbar.Parent = Main
-Instance.new("UICorner", {CornerRadius = UDim.new(0,14), Parent = Topbar})
-
-Instance.new("ImageLabel", {Size = UDim2.fromOffset(48,48), Position = UDim2.fromOffset(12,4), Image = NyoaSs.Logo, BackgroundTransparency = 1, Parent = Topbar})
-Instance.new("TextLabel", {Text = "NyoaSs Gui v10", Font = Enum.Font.GothamBold, TextSize = 20, TextColor3 = Color3.fromRGB(230,200,255), Position = UDim2.fromOffset(68,0), Size = UDim2.new(1,-220,1,0), BackgroundTransparency = 1, TextXAlignment = "Left", Parent = Topbar})
-
-local Minimize = Instance.new("TextButton", {Size = UDim2.fromOffset(38,38), Position = UDim2.new(1,-94,0,9), BackgroundColor3 = Color3.fromRGB(100,180,255), Text = "−", TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 30, Parent = Topbar})
-Instance.new("UICorner", {CornerRadius = UDim.new(0,12), Parent = Minimize})
-
-local Close = Instance.new("TextButton", {Size = UDim2.fromOffset(38,38), Position = UDim2.new(1,-48,0,9), BackgroundColor3 = Color3.fromRGB(255,80,90), Text = "×", TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 26, Parent = Topbar})
-Instance.new("UICorner", {CornerRadius = UDim.new(0,12), Parent = Close})
-
-Minimize.MouseButton1Click:Connect(function()
-    NyoaSs.Minimized = not NyoaSs.Minimized
-    if NyoaSs.Minimized then
-        Tween(Main, {Size = UDim2.fromOffset(0,0)}, 0.4, Enum.EasingStyle.Back)
-        task.wait(0.4)
-        Main.Visible = false
-        MiniBtn.Visible = true
-    else
-        Main.Visible = true
-        Tween(Main, {Size = UDim2.fromOffset(680,540)}, 0.4, Enum.EasingStyle.Back)
-        MiniBtn.Visible = false
-    end
-end)
-
-MiniBtn.MouseButton1Click:Connect(function()
-    NyoaSs.Minimized = false
-    Main.Visible = true
-    Tween(Main, {Size = UDim2.fromOffset(680,540)}, 0.4, Enum.EasingStyle.Back)
-    MiniBtn.Visible = false
-end)
-
-Close.MouseButton1Click:Connect(function()
-    Tween(Main, {Size = UDim2.fromOffset(0,0)}, 0.4)
-    task.wait(0.4)
-    Screen:Destroy()
-end)
-
-local function Drag(frame)
+local function makeDraggable(frame)
     local dragging = false
-    frame.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+    local dragInput, mousePos, framePos
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            local delta = i.Position - frame.AbsolutePosition
-            local conn
-            conn = UIS.InputChanged:Connect(function(i2)
-                if i2.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-                    frame.Position = UDim2.fromOffset(i2.Position.X - delta.X, i2.Position.Y - delta.Y)
+            mousePos = input.Position
+            framePos = frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
                 end
-            end)
-            i.Changed:Connect(function()
-                if i.UserInputState == Enum.UserInputState.End then dragging = false; conn:Disconnect() end
             end)
         end
     end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input == dragInput or input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - mousePos
+            frame.Position = UDim2.new(
+                framePos.X.Scale,
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale,
+                framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
 end
-Drag(Topbar)
-Drag(MiniBtn)
 
-local Sidebar = Instance.new("Frame", {Size = UDim2.new(0,180,1,-56), Position = UDim2.fromOffset(0,56), BackgroundColor3 = Color3.fromRGB(15,15,21), Parent = Main})
-local Content = Instance.new("Frame", {Size = UDim2.new(1,-180,1,-56), Position = UDim2.fromOffset(180,56), BackgroundTransparency = 1, Parent = Main})
+makeDraggable(openBtn)
+makeDraggable(main)
 
-local CurrentTab = nil
+openBtn.MouseButton1Click:Connect(function() openBtn.Visible = false main.Visible = true end)
+close.MouseButton1Click:Connect(function() main.Visible = false openBtn.Visible = true end)
+dropBtn.MouseButton1Click:Connect(function() dropList.Visible = not dropList.Visible end)
 
-function NyoaSs:Window()
-    local Window = {}
-
-    function Window:Tab(name)
-        local Tab = {}
-        local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1,-20,0,50)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(35,35,45)
-        TabBtn.Text = "  "..name
-        TabBtn.TextColor3 = Color3.fromRGB(210,210,210)
-        TabBtn.TextXAlignment = "Left"
-        TabBtn.Font = Enum.Font.GothamSemibold
-        TabBtn.TextSize = 15
-        TabBtn.Parent = Sidebar
-        Instance.new("UICorner", {CornerRadius = UDim.new(0,10), Parent = TabBtn})
-
-        local TabPage = Instance.new("ScrollingFrame")
-        TabPage.Size = UDim2.fromScale(1,1)
-        TabPage.BackgroundTransparency = 1
-        TabPage.ScrollBarThickness = 4
-        TabPage.Visible = false
-        TabPage.Parent = Content
-        local Layout = Instance.new("UIListLayout", {Padding = UDim.new(0,12), Parent = TabPage})
-        Instance.new("UIPadding", {PaddingLeft = UDim.new(0,16), PaddingRight = UDim.new(0,16), PaddingTop = UDim.new(0,16), Parent = TabPage})
-
-        Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            TabPage.CanvasSize = UDim2.fromOffset(0, Layout.AbsoluteContentSize.Y + 32)
-        end)
-
-        TabBtn.MouseButton1Click:Connect(function()
-            if CurrentTab then CurrentTab.Visible = false end
-            TabPage.Visible = true
-            Tween(TabBtn, {BackgroundColor3 = NyoaSs.Accent}, 0.25)
-            CurrentTab = TabPage
-        end)
-
-        -- Search Bar
-        function Tab:SearchBar()
-            local searchFrame = Instance.new("Frame", {Size = UDim2.new(1,0,0,44), BackgroundColor3 = Color3.fromRGB(35,35,45), Parent = TabPage})
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,10), Parent = searchFrame})
-            local searchBox = Instance.new("TextBox", {PlaceholderText = "Search...", Size = UDim2.new(1,-16,1,-12), Position = UDim2.fromOffset(8,6), BackgroundTransparency = 1, TextColor3 = Color3.new(1,1,1), TextXAlignment = "Left", Parent = searchFrame})
-            NyoaSs.SearchText = ""
-            searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-                NyoaSs.SearchText = searchBox.Text:lower()
-            end)
+RunService.Heartbeat:Connect(function()
+    if not getgenv().MeleeAuraEnabled then
+        if sg then sg.Enabled = false end
+        return
+    else
+        if sg then sg.Enabled = true end
         end
 
-        -- Button
-        function Tab:Button(text, callback)
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1,0,0,48)
-            btn.BackgroundColor3 = NyoaSs.Accent
-            btn.Text = text
-            btn.TextColor3 = Color3.new(1,1,1)
-            btn.Font = Enum.Font.GothamBold
-            btn.Visible = true
-            btn.Parent = TabPage
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,12), Parent = btn})
-            btn.MouseButton1Click:Connect(callback or function() end)
-            return btn
-        end
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") then return end
 
-        -- Toggle
-        function Tab:Toggle(text, default, callback)
-            local val = default or false
-            local f = Instance.new("Frame", {Size = UDim2.new(1,0,0,50), BackgroundTransparency = 1, Parent = TabPage})
-            Instance.new("TextLabel", {Text = text, TextColor3 = Color3.new(1,1,1), Size = UDim2.new(1,-70,1,0), TextXAlignment = "Left", BackgroundTransparency = 1, Parent = f})
-            local sw = Instance.new("Frame", {Size = UDim2.fromOffset(58,32), Position = UDim2.new(1,-74,0.5,-16), BackgroundColor3 = val and NyoaSs.Accent or Color3.fromRGB(60,60,70), Parent = f})
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,16), Parent = sw})
-            local cir = Instance.new("Frame", {Size = UDim2.fromOffset(26,26), Position = UDim2.fromOffset(val and 28 or 4,3), BackgroundColor3 = Color3.new(1,1,1), Parent = sw})
-            Instance.new("UICorner", {CornerRadius = UDim.new(1,0), Parent = cir})
+    local root = char.HumanoidRootPart
+    local hum = char.Humanoid
+    if hum.Health <= 0 then return end
 
-            sw.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 then
-                    val = not val
-                    Tween(sw, {BackgroundColor3 = val and NyoaSs.Accent or Color3.fromRGB(60,60,70)}, 0.2)
-                    Tween(cir, {Position = UDim2.fromOffset(val and 28 or 4,3)}, 0.2)
-                    NyoaSs.Config[text] = val
-                    if callback then callback(val) end
-                end
-            end)
-        end
+    local tool = char:FindFirstChild(selectedWeapon) or player.Backpack:FindFirstChild(selectedWeapon)
+    if not tool then return end
 
-        -- Keybind
-        function Tab:Keybind(text, defaultKey, callback)
-            local key = defaultKey or Enum.KeyCode.Unknown
-            local f = Instance.new("Frame", {Size = UDim2.new(1,0,0,50), BackgroundTransparency = 1, Parent = TabPage})
-            Instance.new("TextLabel", {Text = text, TextColor3 = Color3.new(1,1,1), Size = UDim2.new(1,-100,1,0), TextXAlignment = "Left", BackgroundTransparency = 1, Parent = f})
-            local bindBtn = Instance.new("TextButton", {Size = UDim2.fromOffset(90,32), Position = UDim2.new(1,-106,0.5,-16), BackgroundColor3 = Color3.fromRGB(50,50,60), Text = key.Name, TextColor3 = Color3.new(1,1,1), Parent = f})
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,8), Parent = bindBtn})
-
-            local listening = false
-            bindBtn.MouseButton1Click:Connect(function()
-                listening = true
-                bindBtn.Text = "..."
-            end)
-
-            UIS.InputBegan:Connect(function(input)
-                if listening and input.KeyCode ~= Enum.KeyCode.Unknown then
-                    key = input.KeyCode
-                    bindBtn.Text = key.Name
-                    listening = false
-                    NyoaSs.Keybinds[text] = key
-                    if callback then callback(key) end
-                end
-            end)
-        end
-
-        -- Slider
-        function Tab:Slider(text, min, max, default, step, callback)
-            local val = default or min
-            local f = Instance.new("Frame", {Size = UDim2.new(1,0,0,70), BackgroundTransparency = 1, Parent = TabPage})
-            local label = Instance.new("TextLabel", {Text = text.." : "..val, TextColor3 = Color3.new(1,1,1), Size = UDim2.new(1,0,0,24), BackgroundTransparency = 1, Parent = f})
-            local bar = Instance.new("Frame", {Size = UDim2.new(1,0,0,12), Position = UDim2.fromOffset(0,30), BackgroundColor3 = Color3.fromRGB(50,50,60), Parent = f})
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,6), Parent = bar})
-            local fill = Instance.new("Frame", {Size = UDim2.new((val-min)/(max-min),0,1,0), BackgroundColor3 = NyoaSs.Accent, Parent = bar})
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,6), Parent = fill})
-            local knob = Instance.new("Frame", {Size = UDim2.fromOffset(22,22), AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.new((val-min)/(max-min),0,0.5,0), BackgroundColor3 = Color3.new(1,1,1), Parent = bar})
-            Instance.new("UICorner", {CornerRadius = UDim.new(1,0), Parent = knob})
-
-            local dragging = false
-            knob.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
-            knob.InputEnded:Connect(function() dragging = false end)
-            UIS.InputChanged:Connect(function(i)
-                if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-                    local perc = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-                    val = min + (max - min) * perc
-                    if step then val = math.floor(val / step + 0.5) * step end
-                    Tween(fill, {Size = UDim2.new(perc,0,1,0)}, 0.1)
-                    Tween(knob, {Position = UDim2.new(perc,0,0.5,0)}, 0.1)
-                    label.Text = text.." : "..tostring(val)
-                    NyoaSs.Config[text] = val
-                    if callback then callback(val) end
-                end
-            end)
-        end
-
-        -- Dropdown
-        function Tab:Dropdown(text, items, callback)
-            local open = false
-            local selected = items[1]
-            local f = Instance.new("Frame", {Size = UDim2.new(1,0,0,50), BackgroundTransparency = 1, Parent = TabPage})
-            local btn = Instance.new("TextButton", {Size = UDim2.new(1,0,0,46), BackgroundColor3 = Color3.fromRGB(45,45,55), Text = text.." : "..selected, Parent = f})
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,10), Parent = btn})
-
-            local list = Instance.new("Frame", {Size = UDim2.new(1,0,0,0), Position = UDim2.fromOffset(0,50), BackgroundColor3 = Color3.fromRGB(40,40,50), Visible = false, Parent = f})
-            Instance.new("UICorner", {CornerRadius = UDim.new(0,10), Parent = list})
-
-            for _, item in ipairs(items) do
-                local opt = Instance.new("TextButton", {Size = UDim2.new(1,0,0,40), BackgroundTransparency = 1, Text = "  "..item, TextColor3 = Color3.new(1,1,1), TextXAlignment = "Left", Parent = list})
-                opt.MouseButton1Click:Connect(function()
-                    selected = item
-                    btn.Text = text.." : "..item
-                    list.Visible = false
-                    open = false
-                    if callback then callback(item) end
-                end)
+    local closest = nil
+    local closestDist = maxDistance
+    for _, p in Players:GetPlayers() do
+        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (root.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if dist < closestDist then
+                closestDist = dist
+                closest = p.Character.HumanoidRootPart
             end
-
-            btn.MouseButton1Click:Connect(function()
-                open = not open
-                list.Visible = open
-                Tween(list, {Size = open and UDim2.new(1,0,0,#items*40) or UDim2.new(1,0,0,0)}, 0.3)
-            end)
         end
-
-        if not CurrentTab then TabBtn.MouseButton1Click:Fire() end
-        return Tab
     end
 
-    return Window
-end
+    if closest then
+        hum:EquipTool(tool)
 
-NyoaSs:Notify({Title = "NyoaSs Gui v10", Content = "Full version loaded", Duration = 5})
+        local start = tick()
+        repeat
+            local lookAt = Vector3.new(closest.Position.X, root.Position.Y, closest.Position.Z)
+            local targetCF = CFrame.new(root.Position, lookAt)
+            root.CFrame = CFrame.new(root.Position) * targetCF.Rotation
 
-return NyoaSs
+            tool:Activate()
+            RunService.Heartbeat:Wait()
+        until tick() - start >= 0.5 or not auraEnabled or not closest.Parent
+
+    if getgenv().UnequipWhenUsed then
+        hum:UnequipTools()
+    end
+end)
+
+toggle.MouseButton1Click:Connect(function()
+    auraEnabled = not auraEnabled
+    toggle.Text = auraEnabled and "ON" or "OFF"
+    toggle.BackgroundColor3 = auraEnabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+end)
