@@ -2,92 +2,101 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
-local pgui = player:WaitForChild("PlayerGui", 10)
+local pgui = player:WaitForChild("PlayerGui")
 
-if not pgui then return end
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "NyoaSs_Notify"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = pgui
 
-local screen = Instance.new("ScreenGui")
-screen.Name = "NyoaSs_NotifyLib"
-screen.ResetOnSpawn = false
-screen.IgnoreGuiInset = true
-screen.DisplayOrder = 999
-screen.Parent = pgui
+getgenv().Notify = function(text)
+    local notify = Instance.new("Frame")
+    notify.Size = UDim2.new(0,300,0,56)
+    notify.Position = UDim2.new(0.5,-150,0,-70)
+    notify.BackgroundColor3 = Color3.fromRGB(20,20,24)
+    notify.BorderSizePixel = 0
+    notify.ClipsDescendants = true
+    notify.ZIndex = 999
+    notify.Parent = screenGui
 
-getgenv().Notify = function(mainText, subText, duration)
-    subText = subText or "by Slivkineepy, Menanes"
-    duration = duration or 5
+    Instance.new("UICorner",notify).CornerRadius = UDim.new(0,10)
 
-    task.spawn(function()
-        local notify = Instance.new("Frame")
-        notify.Size = UDim2.new(0, 300, 0, 56)
-        notify.Position = UDim2.new(0.5, -150, 0, -70)
-        notify.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
-        notify.BorderSizePixel = 0
-        notify.ClipsDescendants = true
-        notify.ZIndex = 999
-        notify.Parent = screen
+    local stroke = Instance.new("UIStroke",notify)
+    stroke.Color = Color3.new(1,1,1)
+    stroke.Transparency = 0.8
+    stroke.Thickness = 1
 
-        Instance.new("UICorner", notify).CornerRadius = UDim.new(0, 10)
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1,-50,0,22)
+    title.Position = UDim2.new(0,12,0,8)
+    title.BackgroundTransparency = 1
+    title.Text = text
+    title.TextColor3 = Color3.new(1,1,1)
+    title.Font = Enum.Font.GothamothBold
+    title.TextSize = 15
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 999
+    title.Parent = notify
 
-        local stroke = Instance.new("UIStroke", notify)
-        stroke.Color = Color3.new(1, 1, 1)
-        stroke.Transparency = 0.8
-        stroke.Thickness = 1
+    local author = Instance.new("TextLabel")
+    author.Size = UDim2.new(1,-50,0,16)
+    author.Position = UDim2.new(0,12,0,30)
+    author.BackgroundTransparency = 1
+    author.Text = "by Slivkineepy, Menanes"
+    author.TextColor3 = Color3.fromRGB(160,160,170)
+    author.Font = Enum.Font.Gotham
+    author.TextSize = 12
+    author.TextXAlignment = Enum.TextXAlignment.Left
+    author.ZIndex = 999
+    author.Parent = notify
 
-        local title = Instance.new("TextLabel", notify)
-        title.Size = UDim2.new(1, -50, 0, 22)
-        title.Position = UDim2.new(0, 12, 0, 8)
-        title.BackgroundTransparency = 1
-        title.Text = tostring(mainText)
-        title.TextColor3 = Color3.new(1, 1, 1)
-        title.Font = Enum.Font.GothamBold
-        title.TextSize = 15
-        title.TextXAlignment = Enum.TextXAlignment.Left
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0,24,0,24)
+    closeBtn.Position = UDim2.new(1,-32,0,8)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Text = "x"
+    closeBtn.TextColor3 = Color3.fromRGB(180,180,180)
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 18
+    closeBtn.ZIndex = 999
+    closeBtn.Parent = notify
 
-        local subtitle = Instance.new("TextLabel", notify)
-        subtitle.Size = UDim2.new(1, -50, 0, 16)
-        subtitle.Position = UDim2.new(0, 12, 0, 30)
-        subtitle.BackgroundTransparency = 1
-        subtitle.Text = tostring(subText)
-        subtitle.TextColor3 = Color3.fromRGB(160, 160, 170)
-        subtitle.Font = Enum.Font.Gotham
-        subtitle.TextSize = 12
-        subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    local barBg = Instance.new("Frame")
+    barBg.Size = UDim2.new(1,-24,0,3)
+    barBg.Position = UDim2.new(0,12,1,-10)
+    barBg.BackgroundColor3 = Color3.fromRGB(40,40,45)
+    barBg.ZIndex = 999
+    barBg.Parent = notify
+    Instance.new("UICorner",barBg).CornerRadius = UDim.new(0,2)
 
-        local closeBtn = Instance.new("TextButton", notify)
-        closeBtn.Size = UDim2.new(0, 24, 0, 24)
-        closeBtn.Position = UDim2.new(1, -32, 0, 8)
-        closeBtn.BackgroundTransparency = 1
-        closeBtn.Text = "x"
-        closeBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-        closeBtn.Font = Enum.Font.GothamBold
-        closeBtn.TextSize = 18
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1,0,1,0)
+    bar.BackgroundColor3 = Color3.fromRGB(100,180,255)
+    bar.ZIndex = 999
+    bar.Parent = barBg
+    Instance.new("UICorner",bar).CornerRadius = UDim.new(0,2)
 
-        local barBg = Instance.new("Frame", notify)
-        barBg.Size = UDim2.new(1, -24, 0, 3)
-        barBg.Position = UDim2.new(0, 12, 1, -10)
-        barBg.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-        barBg.BorderSizePixel = 0
-        Instance.new("UICorner", barBg).CornerRadius = UDim.new(0, 2)
+    local shown = false
 
-        local bar = Instance.new("Frame", barBg)
-        bar.Size = UDim2.new(1, 0, 1, 0)
-        bar.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
-        bar.BorderSizePixel = 0
-        Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
-
-        local function hide()
-            TweenService:Create(notify, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {Position = UDim2.new(0.5, -150, 0, -70)}):Play()
+    local function hide()
+        if shown then
+            shown = false
+            TweenService:Create(notify,TweenInfo.new(0.4,Enum.EasingStyle.Quint),{Position=UDim2.new(0.5,-150,0,-70)}):Play()
             task.wait(0.45)
             notify:Destroy()
         end
+    end
 
-        closeBtn.MouseButton1Click:Connect(hide)
+    local function show()
+        shown = true
+        TweenService:Create(notify,TweenInfo.new(0.5,Enum.EasingStyle.Quint),{Position=UDim2.new(0.5,-150,0,12)}):Play()
+        local t = TweenService:Create(bar,TweenInfo.new(5,Enum.EasingStyle.Linear),{Size=UDim2.new(0,0,1,0)})
+        t:Play()
+        t.Completed:Wait()
+        if shown then hide() end
+    end
 
-        TweenService:Create(notify, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0.5, -150, 0, 12)}):Play()
-        local progress = TweenService:Create(bar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)})
-        progress:Play()
-        progress.Completed:Wait()
-        hide()
-    end)
+    closeBtn.MouseButton1Click:Connect(hide)
+    task.spawn(show)
 end
