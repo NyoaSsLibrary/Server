@@ -10,7 +10,7 @@ local screen = Instance.new("ScreenGui")
 screen.Name = "NyoaSs_NotifyLib"
 screen.ResetOnSpawn = false
 screen.IgnoreGuiInset = true
-screen.DisplayOrder = 999999
+screen.DisplayOrder = 999
 screen.Parent = pgui
 
 getgenv().Notify = function(mainText, subText, duration)
@@ -24,7 +24,7 @@ getgenv().Notify = function(mainText, subText, duration)
         notify.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
         notify.BorderSizePixel = 0
         notify.ClipsDescendants = true
-        notify.ZIndex = 999999
+        notify.ZIndex = 999
         notify.Parent = screen
 
         Instance.new("UICorner", notify).CornerRadius = UDim.new(0, 10)
