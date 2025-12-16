@@ -1,0 +1,146 @@
+-- // made by muj
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+-- Update references if respawned
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+    task.wait()
+    HRP = char:WaitForChild("HumanoidRootPart")
+end)
+
+local plots = workspace:WaitForChild("Plots")
+
+-- // Convert "1.2M/s" → number
+local function parseGenerationText(text)
+    text = string.upper(text):gsub("[%$,]", ""):gsub("/S", ""):gsub("%s", "")
+    local num = tonumber(text:match("[%d%.]+")) or 0
+    if text:find("K") then return num * 1e3
+    elseif text:find("M") then return num * 1e6
+    elseif text:find("B") then return num * 1e9
+    elseif text:find("T") then return num * 1e12
+    else return num end
+end
+
+-- // Find highest generating brainrot
+local function getHighestBrainrot()
+    local bestValue = -1
+    local bestAttachment = nil
+
+    for _, plot in pairs(plots:GetChildren()) do
+        local podiums = plot:FindFirstChild("AnimalPodiums")
+        if not podiums then continue end
+
+        for _, rotFolder in pairs(podiums:GetChildren()) do
+            local base = rotFolder:FindFirstChild("Base")
+            local spawn = base and base:FindFirstChild("Spawn")
+            local attachment = spawn and spawn:FindFirstChild("Attachment")
+            local overhead = attachment and attachment:FindFirstChild("AnimalOverhead")
+
+            if overhead then
+                local gen = overhead:FindFirstChild("Generation")
+                if gen and gen.Text then
+                    local val = parseGenerationText(gen.Text)
+                    if val > bestValue then
+                        bestValue = val
+                        bestAttachment = attachment
+                    end
+                end
+            end
+        end
+    end
+
+    return bestAttachment
+end
+
+-- // Get closest player to the brainrot
+local function getClosestPlayerToBrainrot(attachment)
+    if not attachment then return nil end
+    local pos = attachment.WorldPosition
+    local closest = nil
+    local closestDist = math.huge
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (plr.Character.HumanoidRootPart.Position - pos).Magnitude
+            if dist < closestDist then
+                closestDist = dist
+                closest = plr
+            end
+        end
+    end
+
+    return closest
+end
+
+-- // Teleport + Body Swap with anti-cheat monitoring
+local function executeTeleportSwap(plr)
+    if not plr or not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then
+        return false
+    end
+
+    local targetHRP = plr.Character.HumanoidRootPart
+
+    local potion = LocalPlayer.Backpack:FindFirstChild("Body Swap Potion")
+    if not potion then return false end
+    potion.Parent = Character
+    task.wait(0.26)
+
+    -- Teleport
+    HRP.CFrame = targetHRP.CFrame
+
+    local activated = false
+    local swapActive = true
+
+    -- Activate potion repeatedly
+    local equipped = Character:FindFirstChild("Body Swap Potion")
+    if equipped then
+        local conn
+        conn = RunService.Heartbeat:Connect(function()
+            if not swapActive then conn:Disconnect() end
+        end)
+
+        for i = 1, 240 do
+            if not swapActive then break end
+            equipped:Activate()
+            task.wait(1/240)
+        end
+
+        activated = true
+        swapActive = false
+        if conn then conn:Disconnect() end
+    end
+
+    return activated
+end
+
+-- // Auto-execute loop
+task.spawn(function()
+    task.wait(1) -- small wait for game to fully load
+    local highest = getHighestBrainrot()
+    if not highest then
+        warn("No brainrots found")
+        return
+    end
+
+    local target = getClosestPlayerToBrainrot(highest)
+    if not target then
+        warn("No players near brainrot")
+        return
+    end
+
+    for attempt = 1, 5 do
+        local success = executeTeleportSwap(target)
+        if success then
+            print("mujs bodyswap worked")
+            break
+        else
+            print("Attempt " .. attempt .. " failed, retrying...")
+            task.wait(0.5)
+        end
+    end
+end)
