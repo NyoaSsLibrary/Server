@@ -2311,18 +2311,14 @@ createToggle(pages.Misc, "Unwalk [No Walk Anim]", function(state)
     if anim then anim.Disabled = state end
 end)
 
-createToggle(pages.Misc, "Desync Combined", function(state)
-    if state then
-        loadstring(game:HttpGet("https://pastefy.app/D1xVVUU6/raw"))()
-        createNotify("Desync enabled!")
-    end
+createButton(pages.Misc, "Desync Combined", function()
+loadstring(game:HttpGet("https://pastefy.app/D1xVVUU6/raw"))()
+        createNotify("Desync GUI loaded!")
 end)
 
-createToggle(pages.Misc, "Bypass Desync", function(state)
-    if state then
-        loadstring(game:HttpGet("https://pastefy.app/uM8hMvu8/raw"))()
-        createNotify("Bypass enabled!")
-    end
+createButton(pages.Misc, "Bypass Desync", function()
+loadstring(game:HttpGet("https://pastefy.app/uM8hMvu8/raw"))()
+        createNotify("Bypass GUI loaded!")
 end)
 
 createToggle(pages.Misc, "Friends Allowed", function(state)
@@ -2435,4 +2431,5 @@ minimizeBtn.MouseButton1Click:Connect(function()
         Services.TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Size = UDim2.new(0,420,0,300)}):Play()
         minimizeBtn.Text = "-"
     end
+
 end)
